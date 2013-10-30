@@ -46,11 +46,14 @@ func CaptureOutputToSyslog(tag string) error {
         return err
     }
     defer out.Close()
-    out_fh, ok := out.(*os.File)
+    type fder interface {
+        Fd() uintptr
+    }
+    out_fder, ok := out.(fder)
     if !ok {
         return OutputCaptureError.New("unable to get underlying pipe")
     }
-    err = CaptureOutputToFd(int(out_fh.Fd()))
+    err = CaptureOutputToFd(int(out_fder.Fd()))
     if err != nil {
         return err
     }
