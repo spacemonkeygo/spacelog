@@ -5,7 +5,6 @@ package log
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -71,6 +70,6 @@ func (h *TextHandler) SetTextOutput(output TextOutput) {
 }
 
 var (
-	defaultHandler = NewTextHandler(ColorTemplate,
-		NewWriterOutput(os.Stderr))
+	defaultHandler = NewTextHandler(StdlibTemplate,
+		StdlibOutput{})
 )

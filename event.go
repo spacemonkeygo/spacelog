@@ -40,5 +40,5 @@ func (l *LogEvent) Time() string {
 }
 
 func (l *LogEvent) Date() string {
-	return l.Timestamp.Format("2006-01-02")
+	return l.Timestamp.Format("2006/01/02")
 }

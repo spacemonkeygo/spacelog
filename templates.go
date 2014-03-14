@@ -37,4 +37,9 @@ var (
 		`{{.Level}} {{.LoggerName}} ` +
 			`{{if .Filename}}{{.Filename}}:{{.Line}} {{end}}` +
 			`- {{.Message}}`))
+
+	StdlibTemplate = template.Must(template.New("standard").Parse(
+		`{{.Level}} {{.LoggerName}} ` +
+			`{{if .Filename}}{{.Filename}}:{{.Line}} {{end}}` +
+			`- {{.Message}}`))
 )

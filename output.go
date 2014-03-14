@@ -5,6 +5,7 @@ package log
 import (
 	"bytes"
 	"io"
+	"log"
 	"log/syslog"
 )
 
@@ -55,4 +56,13 @@ func (o *SyslogOutput) Output(level LogLevel, message []byte) {
 			o.w.Debug(string(msg))
 		}
 	}
+}
+
+// StdlibOutput is for writing to the default logging system if no one has
+// called Setup. If someone has called Setup, though, this will most likely
+// cause endless recursion.
+type StdlibOutput struct{}
+
+func (StdlibOutput) Output(_ LogLevel, message []byte) {
+	log.Print(string(message))
 }
