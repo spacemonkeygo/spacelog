@@ -3,19 +3,11 @@
 package log
 
 import (
-	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"syscall"
-
-	"code.spacemonkey.com/go/errors"
-)
-
-var (
-	syslog_binary = flag.String("logging_subprocess", "/usr/bin/logger",
-		"process to run for stderr-captured logging")
-	OutputCaptureError = errors.New(nil, "output capture error")
 )
 
 func CaptureOutputToFd(fd int) error {
@@ -39,8 +31,8 @@ func CaptureOutputToFile(path string) error {
 	return CaptureOutputToFd(int(fh.Fd()))
 }
 
-func CaptureOutputToSyslog(tag string) error {
-	cmd := exec.Command(*syslog_binary, "-t", tag)
+func CaptureOutputToProcess(tag, command string) error {
+	cmd := exec.Command(command, "-t", tag)
 	out, err := cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -51,7 +43,7 @@ func CaptureOutputToSyslog(tag string) error {
 	}
 	out_fder, ok := out.(fder)
 	if !ok {
-		return OutputCaptureError.New("unable to get underlying pipe")
+		return fmt.Errorf("unable to get underlying pipe")
 	}
 	err = CaptureOutputToFd(int(out_fder.Fd()))
 	if err != nil {
