@@ -18,7 +18,7 @@ var (
 	filter = flag.String("log.filter", "",
 		"logger prefix to set level to debug")
 	format       = flag.String("log.format", "", "Format string to use")
-	stdlog_level = flag.String("log.stdlevel", "info",
+	stdlog_level = flag.String("log.stdlevel", "warn",
 		"logger level for stdlog integration")
 	syslog_binary = flag.String("log.subproc", "/usr/bin/logger",
 		"process to run for stderr-captured logging")
