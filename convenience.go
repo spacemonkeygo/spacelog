@@ -19,6 +19,12 @@ func (l *Logger) Debugf(format string, v ...interface{}) {
 	}
 }
 
+func (l *Logger) Debuge(err error) {
+	if l.getLevel() <= Debug && err != nil {
+		l.getHandler().Log(l.name, Debug, err.Error(), 1)
+	}
+}
+
 func (l *Logger) DebugEnabled() bool {
 	return l.getLevel() <= Debug
 }
@@ -32,6 +38,12 @@ func (l *Logger) Info(v ...interface{}) {
 func (l *Logger) Infof(format string, v ...interface{}) {
 	if l.getLevel() <= Info {
 		l.getHandler().Log(l.name, Info, fmt.Sprintf(format, v...), 1)
+	}
+}
+
+func (l *Logger) Infoe(err error) {
+	if l.getLevel() <= Info && err != nil {
+		l.getHandler().Log(l.name, Info, err.Error(), 1)
 	}
 }
 
@@ -51,6 +63,12 @@ func (l *Logger) Warnf(format string, v ...interface{}) {
 	}
 }
 
+func (l *Logger) Warne(err error) {
+	if l.getLevel() <= Warning && err != nil {
+		l.getHandler().Log(l.name, Warning, err.Error(), 1)
+	}
+}
+
 func (l *Logger) WarnEnabled() bool {
 	return l.getLevel() <= Warning
 }
@@ -64,6 +82,12 @@ func (l *Logger) Error(v ...interface{}) {
 func (l *Logger) Errorf(format string, v ...interface{}) {
 	if l.getLevel() <= Error {
 		l.getHandler().Log(l.name, Error, fmt.Sprintf(format, v...), 1)
+	}
+}
+
+func (l *Logger) Errore(err error) {
+	if l.getLevel() <= Error && err != nil {
+		l.getHandler().Log(l.name, Error, err.Error(), 1)
 	}
 }
 
@@ -83,6 +107,12 @@ func (l *Logger) Critf(format string, v ...interface{}) {
 	}
 }
 
+func (l *Logger) Crite(err error) {
+	if l.getLevel() <= Critical && err != nil {
+		l.getHandler().Log(l.name, Critical, err.Error(), 1)
+	}
+}
+
 func (l *Logger) CritEnabled() bool {
 	return l.getLevel() <= Critical
 }
@@ -96,6 +126,12 @@ func (l *Logger) Log(level LogLevel, v ...interface{}) {
 func (l *Logger) Logf(level LogLevel, format string, v ...interface{}) {
 	if l.getLevel() <= level {
 		l.getHandler().Log(l.name, level, fmt.Sprintf(format, v...), 1)
+	}
+}
+
+func (l *Logger) Loge(level LogLevel, err error) {
+	if l.getLevel() <= level && err != nil {
+		l.getHandler().Log(l.name, level, err.Error(), 1)
 	}
 }
 
