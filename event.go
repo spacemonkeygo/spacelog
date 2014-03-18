@@ -4,6 +4,7 @@ package log
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -41,4 +42,12 @@ func (l *LogEvent) Time() string {
 
 func (l *LogEvent) Date() string {
 	return l.Timestamp.Format("2006/01/02")
+}
+
+func (l *LogEvent) LevelJustified() (rv string) {
+	rv = l.Level.String()
+	if len(rv) < 5 {
+		rv += strings.Repeat(" ", 5-len(rv))
+	}
+	return rv
 }

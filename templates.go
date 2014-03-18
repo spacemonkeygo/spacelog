@@ -22,7 +22,7 @@ var (
 	ColorTemplate = template.Must(template.New("color").Funcs(template.FuncMap{
 		"ColorizeLevel": ColorizeLevel}).Parse(
 		`{{.Blue}}{{.Date}} {{.Time}}{{.Reset}} ` +
-			`{{.Bold}}{{ColorizeLevel .Level}}{{.Level}}{{.Reset}} ` +
+			`{{.Bold}}{{ColorizeLevel .Level}}{{.LevelJustified}}{{.Reset}} ` +
 			`{{.Underline}}{{.LoggerName}}{{.Reset}} ` +
 			`{{if .Filename}}{{.Filename}}:{{.Line}} {{end}}- ` +
 			`{{ColorizeLevel .Level}}{{.Message}}{{.Reset}}`))
@@ -38,7 +38,7 @@ var (
 			`{{if .Filename}}{{.Filename}}:{{.Line}} {{end}}` +
 			`- {{.Message}}`))
 
-	StdlibTemplate = template.Must(template.New("standard").Parse(
+	StdlibTemplate = template.Must(template.New("stdlib").Parse(
 		`{{.Level}} {{.LoggerName}} ` +
 			`{{if .Filename}}{{.Filename}}:{{.Line}} {{end}}` +
 			`- {{.Message}}`))

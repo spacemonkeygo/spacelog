@@ -5,8 +5,14 @@ package log
 import (
 	"regexp"
 	"runtime"
+	"strings"
 	"sync"
 	"text/template"
+)
+
+var (
+	badChars = regexp.MustCompile("[^a-zA-Z0-9_.-]")
+	slashes  = regexp.MustCompile("[/]")
 )
 
 func callerName() string {
@@ -18,7 +24,9 @@ func callerName() string {
 	if f == nil {
 		return "unknown.unknown"
 	}
-	return f.Name()
+	return badChars.ReplaceAllLiteralString(
+		slashes.ReplaceAllLiteralString(
+			strings.TrimPrefix(f.Name(), "code.spacemonkey.com/go/"), "."), "_")
 }
 
 type LoggerCollection struct {
