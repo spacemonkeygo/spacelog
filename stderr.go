@@ -31,8 +31,8 @@ func CaptureOutputToFile(path string) error {
 	return CaptureOutputToFd(int(fh.Fd()))
 }
 
-func CaptureOutputToProcess(tag, command string) error {
-	cmd := exec.Command(command, "-t", tag)
+func CaptureOutputToProcess(command string, args ...string) error {
+	cmd := exec.Command(command, args...)
 	out, err := cmd.StdinPipe()
 	if err != nil {
 		return err

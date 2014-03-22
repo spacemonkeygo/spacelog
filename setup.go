@@ -4,6 +4,7 @@ package log
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"log/syslog"
 	"os"
@@ -20,8 +21,10 @@ var (
 	format       = flag.String("log.format", "", "Format string to use")
 	stdlog_level = flag.String("log.stdlevel", "warn",
 		"logger level for stdlog integration")
-	syslog_binary = flag.String("log.subproc", "/usr/bin/logger",
-		"process to run for stderr-captured logging")
+	log_subproc = flag.String("log.subproc", "",
+		"process to run for stdout/stderr-captured logging. If set (usually to "+
+			"/usr/bin/logger), will redirect stdout and stderr to the given "+
+			"process. process should take --priority <num> and --tag <name> options")
 
 	stdlog  = GetLoggerNamed("stdlog")
 	funcmap = template.FuncMap{"ColorizeLevel": ColorizeLevel}
@@ -32,11 +35,32 @@ func SetFormatMethod(name string, fn interface{}) {
 	funcmap[name] = fn
 }
 
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func MustSetup(procname string) {
+	must(Setup(procname))
+}
+
 func Setup(procname string) error {
 	return SetupWithFacility(procname, syslog.LOG_USER)
 }
 
+func MustSetupWithFacility(procname string, facility syslog.Priority) {
+	must(SetupWithFacility(procname, facility))
+}
+
 func SetupWithFacility(procname string, facility syslog.Priority) error {
+	if *log_subproc != "" {
+		err := CaptureOutputToProcess(*log_subproc, "--tag", procname,
+			"--priority", fmt.Sprint(int(facility|syslog.LOG_CRIT)))
+		if err != nil {
+			return err
+		}
+	}
 	if *level != "" {
 		level_val, err := LevelFromString(*level)
 		if err != nil {
@@ -69,12 +93,6 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 			t = SyslogTemplate
 		}
 		SetHandler(nil, NewTextHandler(t, w))
-		if *syslog_binary != "" {
-			err = CaptureOutputToProcess(procname, *syslog_binary)
-			if err != nil {
-				return err
-			}
-		}
 	case "stdout":
 		if t == nil {
 			t = ColorTemplate
