@@ -21,10 +21,12 @@ var (
 	format       = flag.String("log.format", "", "Format string to use")
 	stdlog_level = flag.String("log.stdlevel", "warn",
 		"logger level for stdlog integration")
-	log_subproc = flag.String("log.subproc", "",
+	subproc = flag.String("log.subproc", "",
 		"process to run for stdout/stderr-captured logging. If set (usually to "+
 			"/usr/bin/logger), will redirect stdout and stderr to the given "+
 			"process. process should take --priority <num> and --tag <name> options")
+	buffer = flag.Int("log.buffer", 0, "the number of messages to buffer. "+
+		"0 for no buffer")
 
 	stdlog  = GetLoggerNamed("stdlog")
 	funcmap = template.FuncMap{"ColorizeLevel": ColorizeLevel}
@@ -54,8 +56,8 @@ func MustSetupWithFacility(procname string, facility syslog.Priority) {
 }
 
 func SetupWithFacility(procname string, facility syslog.Priority) error {
-	if *log_subproc != "" {
-		err := CaptureOutputToProcess(*log_subproc, "--tag", procname,
+	if *subproc != "" {
+		err := CaptureOutputToProcess(*subproc, "--tag", procname,
 			"--priority", fmt.Sprint(int(facility|syslog.LOG_CRIT)))
 		if err != nil {
 			return err
@@ -83,6 +85,7 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 			return err
 		}
 	}
+	var textout TextOutput
 	switch strings.ToLower(*output) {
 	case "syslog":
 		w, err := NewSyslogOutput(facility, procname)
@@ -92,17 +95,17 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 		if t == nil {
 			t = SyslogTemplate
 		}
-		SetHandler(nil, NewTextHandler(t, w))
+		textout = w
 	case "stdout":
 		if t == nil {
 			t = ColorTemplate
 		}
-		SetHandler(nil, NewTextHandler(t, NewWriterOutput(os.Stdout)))
+		textout = NewWriterOutput(os.Stdout)
 	case "stderr":
 		if t == nil {
 			t = ColorTemplate
 		}
-		SetHandler(nil, NewTextHandler(t, NewWriterOutput(os.Stderr)))
+		textout = NewWriterOutput(os.Stderr)
 	default:
 		if t == nil {
 			t = StandardTemplate
@@ -112,8 +115,12 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 		if err != nil {
 			return err
 		}
-		SetHandler(nil, NewTextHandler(t, NewWriterOutput(fh)))
+		textout = NewWriterOutput(fh)
 	}
+	if *buffer > 0 {
+		textout = NewBufferedOutput(textout, *buffer)
+	}
+	SetHandler(nil, NewTextHandler(t, textout))
 	log.SetFlags(log.Lshortfile)
 	stdlog_level_val, err := LevelFromString(*stdlog_level)
 	if err != nil {

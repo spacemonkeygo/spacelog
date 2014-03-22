@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"log/syslog"
+	"sync"
 )
 
 type TextOutput interface {
@@ -59,10 +60,54 @@ func (o *SyslogOutput) Output(level LogLevel, message []byte) {
 }
 
 // StdlibOutput is for writing to the default logging system if no one has
-// called Setup. If someone has called Setup, though, this will most likely
+// called Setup. If someone has called Setup though, this will most likely
 // cause endless recursion.
 type StdlibOutput struct{}
 
 func (StdlibOutput) Output(_ LogLevel, message []byte) {
 	log.Print(string(message))
+}
+
+type bufferMsg struct {
+	level   LogLevel
+	message []byte
+}
+
+type BufferedOutput struct {
+	o       TextOutput
+	c       chan bufferMsg
+	running sync.Mutex
+}
+
+func NewBufferedOutput(output TextOutput, buffer int) *BufferedOutput {
+	if buffer < 0 {
+		buffer = 0
+	}
+	b := &BufferedOutput{
+		o: output,
+		c: make(chan bufferMsg, buffer)}
+	go b.process()
+	return b
+}
+
+func (b *BufferedOutput) Close() {
+	close(b.c)
+	b.running.Lock()
+	b.running.Unlock()
+}
+
+func (b *BufferedOutput) Output(level LogLevel, message []byte) {
+	b.c <- bufferMsg{level: level, message: message}
+}
+
+func (b *BufferedOutput) process() {
+	b.running.Lock()
+	defer b.running.Unlock()
+	for {
+		msg, open := <-b.c
+		if !open {
+			break
+		}
+		b.o.Output(msg.level, msg.message)
+	}
 }

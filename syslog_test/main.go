@@ -12,19 +12,21 @@ import (
 )
 
 var (
-	gosched = flag.Bool("gosched", false, "if true, call gosched before logging")
+	gosched    = flag.Bool("gosched", false, "if true, call gosched before logging")
+	gomaxprocs = flag.Int("gomaxprocs", 1, "gomaxprocs")
 
 	logger = space_log.GetLogger()
 )
 
 func main() {
 	flagfile.Load()
+	runtime.GOMAXPROCS(*gomaxprocs)
 	space_log.MustSetup("syslog_test")
 
 	for i := 0; i < 1000; i++ {
 		go func() {
 			for i := 0; ; i++ {
-				if *gosched && i%10 == 0 {
+				if *gosched {
 					runtime.Gosched()
 				}
 				logger.Warn("hello")
