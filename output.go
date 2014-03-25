@@ -74,9 +74,10 @@ type bufferMsg struct {
 }
 
 type BufferedOutput struct {
-	o       TextOutput
-	c       chan bufferMsg
-	running sync.Mutex
+	o          TextOutput
+	c          chan bufferMsg
+	running    sync.Mutex
+	close_once sync.Once
 }
 
 func NewBufferedOutput(output TextOutput, buffer int) *BufferedOutput {
@@ -91,7 +92,9 @@ func NewBufferedOutput(output TextOutput, buffer int) *BufferedOutput {
 }
 
 func (b *BufferedOutput) Close() {
-	close(b.c)
+	b.close_once.Do(func() {
+		close(b.c)
+	})
 	b.running.Lock()
 	b.running.Unlock()
 }
