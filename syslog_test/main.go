@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/syslog"
 	"runtime"
 
 	"github.com/SpaceMonkeyInc/flagfile"
@@ -14,6 +15,7 @@ import (
 var (
 	gosched    = flag.Bool("gosched", false, "if true, call gosched before logging")
 	gomaxprocs = flag.Int("gomaxprocs", 1, "gomaxprocs")
+	facility   = flag.Int("facility", int(syslog.LOG_LOCAL0), "syslog facility")
 
 	logger = space_log.GetLogger()
 )
@@ -21,7 +23,7 @@ var (
 func main() {
 	flagfile.Load()
 	runtime.GOMAXPROCS(*gomaxprocs)
-	space_log.MustSetup("syslog_test")
+	space_log.MustSetupWithFacility("syslog_test", syslog.Priority(*facility))
 
 	for i := 0; i < 1000; i++ {
 		go func() {
