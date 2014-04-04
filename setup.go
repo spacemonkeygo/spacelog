@@ -24,7 +24,8 @@ var (
 	subproc = flag.String("log.subproc", "",
 		"process to run for stdout/stderr-captured logging. If set (usually to "+
 			"/usr/bin/logger), will redirect stdout and stderr to the given "+
-			"process. process should take --priority <num> and --tag <name> options")
+			"process. process should take --priority <facility>.<level> and "+
+			"--tag <name> options")
 	buffer = flag.Int("log.buffer", 0, "the number of messages to buffer. "+
 		"0 for no buffer")
 
@@ -58,7 +59,7 @@ func MustSetupWithFacility(procname string, facility syslog.Priority) {
 func SetupWithFacility(procname string, facility syslog.Priority) error {
 	if *subproc != "" {
 		err := CaptureOutputToProcess(*subproc, "--tag", procname,
-			"--priority", fmt.Sprint(int(facility|syslog.LOG_CRIT)))
+			"--priority", fmt.Sprintf("%d.%d", facility, syslog.LOG_CRIT))
 		if err != nil {
 			return err
 		}
