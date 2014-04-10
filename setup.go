@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"log/syslog"
+	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -15,9 +16,9 @@ import (
 
 var (
 	output = flag.String("log.output", "stderr", "log output")
-	level  = flag.String("log.level", "", "base logger level")
+	level  = flag.String("log.level", defaultLevel.Name(), "base logger level")
 	filter = flag.String("log.filter", "",
-		"logger prefix to set level to debug")
+		"logger prefix to set level to the lowest level")
 	format       = flag.String("log.format", "", "Format string to use")
 	stdlog_level = flag.String("log.stdlevel", "warn",
 		"logger level for stdlog integration")
@@ -64,11 +65,11 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 			return err
 		}
 	}
-	if *level != "" {
-		level_val, err := LevelFromString(*level)
-		if err != nil {
-			return err
-		}
+	level_val, err := LevelFromString(*level)
+	if err != nil {
+		return err
+	}
+	if level_val != defaultLevel {
 		SetLevel(nil, level_val)
 	}
 	if *filter != "" {
@@ -76,7 +77,7 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 		if err != nil {
 			return err
 		}
-		SetLevel(re, Debug)
+		SetLevel(re, LogLevel(math.MinInt32))
 	}
 	var t *template.Template
 	if *format != "" {

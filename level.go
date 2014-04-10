@@ -11,16 +11,16 @@ import (
 type LogLevel int32
 
 const (
-	Debug LogLevel = 10
-	Info  LogLevel = 20
-	// syslog has Notice
+	Debug    LogLevel = 10
+	Info     LogLevel = 20
+	Notice   LogLevel = 30
 	Warning  LogLevel = 40
 	Error    LogLevel = 50
 	Critical LogLevel = 60
 	// syslog has Alert
 	// syslog has Emerg
 
-	defaultLevel = Warning
+	defaultLevel = Notice
 )
 
 func (l LogLevel) String() string {
@@ -31,12 +31,33 @@ func (l LogLevel) String() string {
 		return "ERR"
 	case Warning:
 		return "WARN"
+	case Notice:
+		return "NOTE"
 	case Info:
 		return "INFO"
 	case Debug:
 		return "DEBUG"
 	default:
 		return "UNSET"
+	}
+}
+
+func (l LogLevel) Name() string {
+	switch l.Match() {
+	case Critical:
+		return "critical"
+	case Error:
+		return "error"
+	case Warning:
+		return "warning"
+	case Notice:
+		return "notice"
+	case Info:
+		return "info"
+	case Debug:
+		return "debug"
+	default:
+		return "unset"
 	}
 }
 
@@ -49,6 +70,9 @@ func (l LogLevel) Match() LogLevel {
 	}
 	if l >= Warning {
 		return Warning
+	}
+	if l >= Notice {
+		return Notice
 	}
 	if l >= Info {
 		return Info
@@ -67,6 +91,8 @@ func LevelFromString(str string) (LogLevel, error) {
 		return Error, nil
 	case "warn", "warning":
 		return Warning, nil
+	case "note", "notice":
+		return Notice, nil
 	case "info":
 		return Info, nil
 	case "debug":

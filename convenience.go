@@ -51,6 +51,28 @@ func (l *Logger) InfoEnabled() bool {
 	return l.getLevel() <= Info
 }
 
+func (l *Logger) Notice(v ...interface{}) {
+	if l.getLevel() <= Notice {
+		l.getHandler().Log(l.name, Notice, fmt.Sprint(v...), 1)
+	}
+}
+
+func (l *Logger) Noticef(format string, v ...interface{}) {
+	if l.getLevel() <= Notice {
+		l.getHandler().Log(l.name, Notice, fmt.Sprintf(format, v...), 1)
+	}
+}
+
+func (l *Logger) Noticee(err error) {
+	if l.getLevel() <= Notice && err != nil {
+		l.getHandler().Log(l.name, Notice, err.Error(), 1)
+	}
+}
+
+func (l *Logger) NoticeEnabled() bool {
+	return l.getLevel() <= Notice
+}
+
 func (l *Logger) Warn(v ...interface{}) {
 	if l.getLevel() <= Warning {
 		l.getHandler().Log(l.name, Warning, fmt.Sprint(v...), 1)

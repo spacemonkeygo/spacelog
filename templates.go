@@ -12,6 +12,8 @@ func ColorizeLevel(level LogLevel) string {
 		return LogEvent{}.Red()
 	case Warning:
 		return LogEvent{}.Magenta()
+	case Notice:
+		return LogEvent{}.Yellow()
 	case Info, Debug:
 		return LogEvent{}.Green()
 	}

@@ -49,6 +49,8 @@ func (o *SyslogOutput) Output(level LogLevel, message []byte) {
 			o.w.Err(string(msg))
 		case Warning:
 			o.w.Warning(string(msg))
+		case Notice:
+			o.w.Notice(string(msg))
 		case Info:
 			o.w.Info(string(msg))
 		case Debug:
