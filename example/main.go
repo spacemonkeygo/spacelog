@@ -23,7 +23,10 @@ func main() {
 		}
 	}
 	logger.Debug("hello")
+	logger.Info("yo")
+	logger.Notice("hi")
 	log.Printf("whoaaa")
 	logger.Warn("uh")
 	logger.Error("uh oh")
+	logger.Crit("crap")
 }

@@ -31,7 +31,7 @@ func main() {
 				if *gosched {
 					runtime.Gosched()
 				}
-				logger.Warn("hello")
+				logger.Notice("hello")
 			}
 		}()
 	}
@@ -47,7 +47,7 @@ func main() {
 			fmt.Printf("error: %s\n", err)
 			continue
 		}
-		logger.Warn(val)
+		logger.Notice(val)
 		fmt.Printf("val: %s\n", val)
 	}
 }
