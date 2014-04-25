@@ -59,8 +59,8 @@ func MustSetupWithFacility(procname string, facility syslog.Priority) {
 
 func SetupWithFacility(procname string, facility syslog.Priority) error {
 	if *subproc != "" {
-		err := CaptureOutputToProcess(*subproc, "--tag", procname,
-			"--priority", fmt.Sprintf("%d.%d", facility, syslog.LOG_CRIT))
+		err := CaptureOutputToProcess("/usr/bin/setsid", *subproc, "--tag",
+			procname, "--priority", fmt.Sprintf("%d.%d", facility, syslog.LOG_CRIT))
 		if err != nil {
 			return err
 		}
