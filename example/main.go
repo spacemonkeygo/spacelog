@@ -1,10 +1,12 @@
+// Copyright (C) 2014 Space Monkey, Inc.
+
 package main
 
 import (
 	"flag"
 	"log"
 
-	"github.com/SpaceMonkeyInc/flagfile"
+	"github.com/SpaceMonkeyGo/flagfile"
 
 	space_log "code.spacemonkey.com/go/space/log"
 )
