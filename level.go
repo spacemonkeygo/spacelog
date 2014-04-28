@@ -20,7 +20,7 @@ const (
 	// syslog has Alert
 	// syslog has Emerg
 
-	defaultLevel = Notice
+	DefaultLevel = Notice
 )
 
 func (l LogLevel) String() string {

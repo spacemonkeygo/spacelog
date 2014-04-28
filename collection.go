@@ -39,7 +39,7 @@ type LoggerCollection struct {
 func NewLoggerCollection() *LoggerCollection {
 	return &LoggerCollection{
 		loggers: make(map[string]*Logger),
-		level:   defaultLevel,
+		level:   DefaultLevel,
 		handler: defaultHandler}
 }
 

@@ -1,6 +1,6 @@
 // Copyright (C) 2014 Space Monkey, Inc.
 
-package log
+package setup
 
 import (
 	"flag"
@@ -12,11 +12,14 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
+	space_log "code.spacemonkey.com/go/space/log"
 )
 
 var (
 	output = flag.String("log.output", "stderr", "log output")
-	level  = flag.String("log.level", defaultLevel.Name(), "base logger level")
+	level  = flag.String("log.level", space_log.DefaultLevel.Name(),
+		"base logger level")
 	filter = flag.String("log.filter", "",
 		"logger prefix to set level to the lowest level")
 	format       = flag.String("log.format", "", "Format string to use")
@@ -30,8 +33,8 @@ var (
 	buffer = flag.Int("log.buffer", 0, "the number of messages to buffer. "+
 		"0 for no buffer")
 
-	stdlog  = GetLoggerNamed("stdlog")
-	funcmap = template.FuncMap{"ColorizeLevel": ColorizeLevel}
+	stdlog  = space_log.GetLoggerNamed("stdlog")
+	funcmap = template.FuncMap{"ColorizeLevel": space_log.ColorizeLevel}
 )
 
 // SetFormatMethod should be called (if at all) before Setup
@@ -59,25 +62,26 @@ func MustSetupWithFacility(procname string, facility syslog.Priority) {
 
 func SetupWithFacility(procname string, facility syslog.Priority) error {
 	if *subproc != "" {
-		err := CaptureOutputToProcess("/usr/bin/setsid", *subproc, "--tag",
-			procname, "--priority", fmt.Sprintf("%d.%d", facility, syslog.LOG_CRIT))
+		err := space_log.CaptureOutputToProcess("/usr/bin/setsid", *subproc,
+			"--tag", procname, "--priority", fmt.Sprintf("%d.%d", facility,
+				syslog.LOG_CRIT))
 		if err != nil {
 			return err
 		}
 	}
-	level_val, err := LevelFromString(*level)
+	level_val, err := space_log.LevelFromString(*level)
 	if err != nil {
 		return err
 	}
-	if level_val != defaultLevel {
-		SetLevel(nil, level_val)
+	if level_val != space_log.DefaultLevel {
+		space_log.SetLevel(nil, level_val)
 	}
 	if *filter != "" {
 		re, err := regexp.Compile(*filter)
 		if err != nil {
 			return err
 		}
-		SetLevel(re, LogLevel(math.MinInt32))
+		space_log.SetLevel(re, space_log.LogLevel(math.MinInt32))
 	}
 	var t *template.Template
 	if *format != "" {
@@ -87,44 +91,44 @@ func SetupWithFacility(procname string, facility syslog.Priority) error {
 			return err
 		}
 	}
-	var textout TextOutput
+	var textout space_log.TextOutput
 	switch strings.ToLower(*output) {
 	case "syslog":
-		w, err := NewSyslogOutput(facility, procname)
+		w, err := space_log.NewSyslogOutput(facility, procname)
 		if err != nil {
 			return err
 		}
 		if t == nil {
-			t = SyslogTemplate
+			t = space_log.SyslogTemplate
 		}
 		textout = w
 	case "stdout":
 		if t == nil {
-			t = ColorTemplate
+			t = space_log.ColorTemplate
 		}
-		textout = NewWriterOutput(os.Stdout)
+		textout = space_log.NewWriterOutput(os.Stdout)
 	case "stderr":
 		if t == nil {
-			t = ColorTemplate
+			t = space_log.ColorTemplate
 		}
-		textout = NewWriterOutput(os.Stderr)
+		textout = space_log.NewWriterOutput(os.Stderr)
 	default:
 		if t == nil {
-			t = StandardTemplate
+			t = space_log.StandardTemplate
 		}
 		fh, err := os.OpenFile(*output,
 			os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			return err
 		}
-		textout = NewWriterOutput(fh)
+		textout = space_log.NewWriterOutput(fh)
 	}
 	if *buffer > 0 {
-		textout = NewBufferedOutput(textout, *buffer)
+		textout = space_log.NewBufferedOutput(textout, *buffer)
 	}
-	SetHandler(nil, NewTextHandler(t, textout))
+	space_log.SetHandler(nil, space_log.NewTextHandler(t, textout))
 	log.SetFlags(log.Lshortfile)
-	stdlog_level_val, err := LevelFromString(*stdlog_level)
+	stdlog_level_val, err := space_log.LevelFromString(*stdlog_level)
 	if err != nil {
 		return err
 	}
