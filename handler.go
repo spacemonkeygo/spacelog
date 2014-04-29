@@ -3,73 +3,39 @@
 package spacelog
 
 import (
-	"bytes"
-	"fmt"
-	"runtime"
-	"strings"
-	"sync"
 	"text/template"
-	"time"
 )
 
+// Handler is an interface that knows how to process log events. This is the
+// basic interface type for building a logging system. If you want to route
+// structured log data somewhere, you would implement this interface.
 type Handler interface {
 	// Log is called for every message. if calldepth is negative, caller
 	// information is missing
 	Log(logger_name string, level LogLevel, msg string, calldepth int)
 
-	// these are expected to be no-ops on non-text-output handlers
+	// These two calls are expected to be no-ops on non-text-output handlers
 	SetTextTemplate(t *template.Template)
 	SetTextOutput(output TextOutput)
 }
 
-type TextHandler struct {
-	mtx      sync.RWMutex
-	template *template.Template
-	output   TextOutput
-}
+// HandlerFunc is a type to make implementation of the Handler interface easier
+type HandlerFunc func(logger_name string, level LogLevel, msg string,
+	calldepth int)
 
-// NewTextHandler creates a Handler that takes LogEvents, passes them to
-// the given template, and passes the result to output
-func NewTextHandler(t *template.Template, output TextOutput) *TextHandler {
-	return &TextHandler{template: t, output: output}
-}
-
-func (h *TextHandler) Log(logger_name string, level LogLevel, msg string,
+// Log simply calls f(logger_name, level, msg, calldepth)
+func (f HandlerFunc) Log(logger_name string, level LogLevel, msg string,
 	calldepth int) {
-	h.mtx.RLock()
-	output, template := h.output, h.template
-	h.mtx.RUnlock()
-	event := LogEvent{
-		LoggerName: logger_name,
-		Level:      level,
-		Message:    strings.TrimRight(msg, "\n\r"),
-		Timestamp:  time.Now()}
-	if calldepth >= 0 {
-		_, event.Filepath, event.Line, _ = runtime.Caller(calldepth + 1)
-	}
-	var buf bytes.Buffer
-	err := template.Execute(&buf, &event)
-	if err != nil {
-		output.Output(level, []byte(
-			fmt.Sprintf("log format template failed: %s", err)))
-		return
-	}
-	output.Output(level, buf.Bytes())
+	f(logger_name, level, msg, calldepth)
 }
 
-func (h *TextHandler) SetTextTemplate(t *template.Template) {
-	h.mtx.Lock()
-	defer h.mtx.Unlock()
-	h.template = t
-}
+// SetTextTemplate is a no-op
+func (HandlerFunc) SetTextTemplate(t *template.Template) {}
 
-func (h *TextHandler) SetTextOutput(output TextOutput) {
-	h.mtx.Lock()
-	defer h.mtx.Unlock()
-	h.output = output
-}
+// SetTextOutput is a no-op
+func (HandlerFunc) SetTextOutput(output TextOutput) {}
 
 var (
 	defaultHandler = NewTextHandler(StdlibTemplate,
-		StdlibOutput{})
+		&StdlibOutput{})
 )

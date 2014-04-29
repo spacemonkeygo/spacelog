@@ -14,10 +14,12 @@ type TextOutput interface {
 	Output(LogLevel, []byte)
 }
 
+// WriterOutput is an io.Writer wrapper that matches the TextOutput interface
 type WriterOutput struct {
 	w io.Writer
 }
 
+// NewWriterOutput returns a TextOutput that writes messages to an io.Writer
 func NewWriterOutput(w io.Writer) *WriterOutput {
 	return &WriterOutput{w: w}
 }
@@ -26,10 +28,14 @@ func (o *WriterOutput) Output(_ LogLevel, message []byte) {
 	o.w.Write(append(bytes.TrimRight(message, "\r\n"), '\n'))
 }
 
+// SyslogOutput is a syslog client that matches the TextOutput interface
 type SyslogOutput struct {
 	w *syslog.Writer
 }
 
+// NewSyslogOutput returns a TextOutput object that writes to syslog using
+// the given facility and tag. The log level will be determined by the log
+// event.
 func NewSyslogOutput(facility syslog.Priority, tag string) (
 	*SyslogOutput, error) {
 	w, err := syslog.New(facility, tag)
@@ -61,12 +67,13 @@ func (o *SyslogOutput) Output(level LogLevel, message []byte) {
 	}
 }
 
-// StdlibOutput is for writing to the default logging system if no one has
-// called Setup. If someone has called Setup though, this will most likely
-// cause endless recursion.
+// StdlibOutput is a TextOutput that simply writes to the default Go stdlib
+// logging system. It is the default. If you configure the Go stdlib to write
+// to spacelog, make sure to provide a new TextOutput to your logging
+// collection
 type StdlibOutput struct{}
 
-func (StdlibOutput) Output(_ LogLevel, message []byte) {
+func (*StdlibOutput) Output(_ LogLevel, message []byte) {
 	log.Print(string(message))
 }
 
@@ -75,6 +82,8 @@ type bufferMsg struct {
 	message []byte
 }
 
+// BufferedOutput uses a channel to synchronize writes to a wrapped TextOutput
+// and allows for buffering a limited amount of log events.
 type BufferedOutput struct {
 	o          TextOutput
 	c          chan bufferMsg
@@ -82,6 +91,8 @@ type BufferedOutput struct {
 	close_once sync.Once
 }
 
+// NewBufferedOutput returns a BufferedOutput wrapping output with a buffer
+// size of buffer.
 func NewBufferedOutput(output TextOutput, buffer int) *BufferedOutput {
 	if buffer < 0 {
 		buffer = 0
@@ -93,6 +104,7 @@ func NewBufferedOutput(output TextOutput, buffer int) *BufferedOutput {
 	return b
 }
 
+// Close shuts down the BufferedOutput's processing
 func (b *BufferedOutput) Close() {
 	b.close_once.Do(func() {
 		close(b.c)

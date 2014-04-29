@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	// If set, these prefixes will be stripped out of automatic logger names.
+	IgnoredPrefixes []string
+
 	badChars = regexp.MustCompile("[^a-zA-Z0-9_.-]")
 	slashes  = regexp.MustCompile("[/]")
 )
@@ -24,11 +27,16 @@ func callerName() string {
 	if f == nil {
 		return "unknown.unknown"
 	}
+	name := f.Name()
+	for _, prefix := range IgnoredPrefixes {
+		name = strings.TrimPrefix(name, prefix)
+	}
 	return badChars.ReplaceAllLiteralString(
-		slashes.ReplaceAllLiteralString(
-			strings.TrimPrefix(f.Name(), "code.spacemonkey.com/go/"), "."), "_")
+		slashes.ReplaceAllLiteralString(name, "."), "_")
 }
 
+// LoggerCollections contain all of the loggers a program might use. Typically
+// a codebase will just use the default logger collection.
 type LoggerCollection struct {
 	mtx     sync.Mutex
 	loggers map[string]*Logger
@@ -36,6 +44,8 @@ type LoggerCollection struct {
 	handler Handler
 }
 
+// NewLoggerCollection creates a new logger collection. It's unlikely you will
+// ever practically need this method. Use the DefaultLoggerCollection instead.
 func NewLoggerCollection() *LoggerCollection {
 	return &LoggerCollection{
 		loggers: make(map[string]*Logger),
@@ -43,6 +53,9 @@ func NewLoggerCollection() *LoggerCollection {
 		handler: defaultHandler}
 }
 
+// GetLogger returns a new Logger with a name automatically generated using
+// the callstack. If you want to avoid automatic name generation check out
+// GetLoggerNamed
 func (c *LoggerCollection) GetLogger() *Logger {
 	return GetLoggerNamed(callerName())
 }
@@ -63,6 +76,8 @@ func (c *LoggerCollection) getLogger(name string, level LogLevel,
 	return logger
 }
 
+// GetLoggerNamed returns a new Logger with the provided name. GetLogger is
+// more frequently used.
 func (c *LoggerCollection) GetLoggerNamed(name string) *Logger {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
@@ -78,6 +93,9 @@ func (c *LoggerCollection) GetLoggerNamed(name string) *Logger {
 	return logger
 }
 
+// SetLevel will set the current log level for all loggers with names that
+// match a provided regular expression. If the regular expression is nil, then
+// all loggers match.
 func (c *LoggerCollection) SetLevel(re *regexp.Regexp, level LogLevel) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
@@ -92,6 +110,9 @@ func (c *LoggerCollection) SetLevel(re *regexp.Regexp, level LogLevel) {
 	}
 }
 
+// SetHandler will set the current log handler for all loggers with names that
+// match a provided regular expression. If the regular expression is nil, then
+// all loggers match.
 func (c *LoggerCollection) SetHandler(re *regexp.Regexp, handler Handler) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
@@ -106,6 +127,11 @@ func (c *LoggerCollection) SetHandler(re *regexp.Regexp, handler Handler) {
 	}
 }
 
+// SetTextTemplate will set the current text template for all loggers with
+// names that match a provided regular expression. If the regular expression
+// is nil, then all loggers match. Note that not every handler is guaranteed
+// to support text templates and a text template will only apply to
+// text-oriented and unstructured handlers.
 func (c *LoggerCollection) SetTextTemplate(re *regexp.Regexp,
 	t *template.Template) {
 	c.mtx.Lock()
@@ -121,6 +147,11 @@ func (c *LoggerCollection) SetTextTemplate(re *regexp.Regexp,
 	}
 }
 
+// SetTextOutput will set the current output interface for all loggers with
+// names that match a provided regular expression. If the regular expression
+// is nil, then all loggers match. Note that not every handler is guaranteed
+// to support text output and a text output interface will only apply to
+// text-oriented and unstructured handlers.
 func (c *LoggerCollection) SetTextOutput(re *regexp.Regexp,
 	output TextOutput) {
 	c.mtx.Lock()
@@ -137,14 +168,50 @@ func (c *LoggerCollection) SetTextOutput(re *regexp.Regexp,
 }
 
 var (
+	// It's unlikely you'll need to use this directly
 	DefaultLoggerCollection = NewLoggerCollection()
-	GetLoggerNamed          = DefaultLoggerCollection.GetLoggerNamed
-	SetLevel                = DefaultLoggerCollection.SetLevel
-	SetHandler              = DefaultLoggerCollection.SetHandler
-	SetTextTemplate         = DefaultLoggerCollection.SetTextTemplate
-	SetTextOutput           = DefaultLoggerCollection.SetTextOutput
 )
 
+// GetLogger returns an automatically-named logger on the default logger
+// collection.
 func GetLogger() *Logger {
-	return GetLoggerNamed(callerName())
+	return DefaultLoggerCollection.GetLoggerNamed(callerName())
+}
+
+// GetLoggerNamed returns a new Logger with the provided name on the default
+// logger collection. GetLogger is more frequently used.
+func GetLoggerNamed(name string) *Logger {
+	return DefaultLoggerCollection.GetLoggerNamed(name)
+}
+
+// SetLevel will set the current log level for all loggers on the default
+// collection with names that match a provided regular expression. If the
+// regular expression is nil, then all loggers match.
+func SetLevel(re *regexp.Regexp, level LogLevel) {
+	DefaultLoggerCollection.SetLevel(re, level)
+}
+
+// SetHandler will set the current log handler for all loggers on the default
+// collection with names that match a provided regular expression. If the
+// regular expression is nil, then all loggers match.
+func SetHandler(re *regexp.Regexp, handler Handler) {
+	DefaultLoggerCollection.SetHandler(re, handler)
+}
+
+// SetTextTemplate will set the current text template for all loggers on the
+// default collection with names that match a provided regular expression. If
+// the regular expression is nil, then all loggers match. Note that not every
+// handler is guaranteed to support text templates and a text template will
+// only apply to text-oriented and unstructured handlers.
+func SetTextTemplate(re *regexp.Regexp, t *template.Template) {
+	DefaultLoggerCollection.SetTextTemplate(re, t)
+}
+
+// SetTextOutput will set the current output interface for all loggers on the
+// default collection with names that match a provided regular expression. If
+// the regular expression is nil, then all loggers match. Note that not every
+// handler is guaranteed to support text output and a text output interface
+// will only apply to text-oriented and unstructured handlers.
+func SetTextOutput(re *regexp.Regexp, output TextOutput) {
+	DefaultLoggerCollection.SetTextOutput(re, output)
 }
