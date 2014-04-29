@@ -1,6 +1,6 @@
 // Copyright (C) 2013 Space Monkey, Inc.
 
-package log
+package spacelog
 
 import (
 	"fmt"

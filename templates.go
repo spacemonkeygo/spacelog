@@ -1,6 +1,6 @@
 // Copyright (C) 2014 Space Monkey, Inc.
 
-package log
+package spacelog
 
 import (
 	"text/template"
