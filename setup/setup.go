@@ -12,7 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package setup provides simple helpers for configuring spacelog from flags.
+/*
+Package setup provides simple helpers for configuring spacelog from flags.
+
+This package adds the following flags:
+  --log.output - can either be stdout, stderr, syslog, or a file path
+  --log.level - the base logger level
+  --log.filter - loggers that match this regular expression get set to the
+      lowest level
+  --log.format - a go text template for log lines
+  --log.stdlevel - the logger level to assume the standard library logger is
+      using
+  --log.subproc - a process to run for stdout/stderr capturing
+  --log.buffer - the number of message to buffer
+*/
 package setup
 
 import (
@@ -38,7 +51,7 @@ var (
 		"logger prefix to set level to the lowest level")
 	format       = flag.String("log.format", "", "Format string to use")
 	stdlog_level = flag.String("log.stdlevel", "warn",
-		"logger level for stdlog integration")
+		"logger level for stdlib log integration")
 	subproc = flag.String("log.subproc", "",
 		"process to run for stdout/stderr-captured logging. The command is first "+
 			"processed as a Go template that supports {{.Facility}}, {{.Level}}, "+
