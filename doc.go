@@ -33,6 +33,6 @@ Provided are a simple TextHandler with a variety of log event templates and
 TextOutput sinks, such as io.Writer, Syslog, and so forth.
 
 Make sure to see the setup subpackage for easy and configurable logging setup
-at process start
+at process start: http://godoc.org/github.com/SpaceMonkeyGo/spacelog/setup
 */
 package spacelog
