@@ -40,7 +40,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/SpaceMonkeyGo/spacelog"
+	"github.com/spacemonkeygo/spacelog"
 )
 
 var (

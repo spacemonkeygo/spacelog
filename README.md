@@ -1,6 +1,6 @@
 # spacelog
 
-Please see http://godoc.org/github.com/SpaceMonkeyGo/spacelog for info
+Please see http://godoc.org/github.com/spacemonkeygo/spacelog for info
 
 ### License
 
