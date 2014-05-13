@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"io"
 	"log"
-	"log/syslog"
 	"sync"
 )
 
@@ -38,45 +37,6 @@ func NewWriterOutput(w io.Writer) *WriterOutput {
 
 func (o *WriterOutput) Output(_ LogLevel, message []byte) {
 	o.w.Write(append(bytes.TrimRight(message, "\r\n"), '\n'))
-}
-
-// SyslogOutput is a syslog client that matches the TextOutput interface
-type SyslogOutput struct {
-	w *syslog.Writer
-}
-
-// NewSyslogOutput returns a TextOutput object that writes to syslog using
-// the given facility and tag. The log level will be determined by the log
-// event.
-func NewSyslogOutput(facility syslog.Priority, tag string) (
-	*SyslogOutput, error) {
-	w, err := syslog.New(facility, tag)
-	if err != nil {
-		return nil, err
-	}
-	return &SyslogOutput{w: w}, nil
-}
-
-func (o *SyslogOutput) Output(level LogLevel, message []byte) {
-	level = level.Match()
-	for _, msg := range bytes.Split(message, []byte{'\n'}) {
-		switch level {
-		case Critical:
-			o.w.Crit(string(msg))
-		case Error:
-			o.w.Err(string(msg))
-		case Warning:
-			o.w.Warning(string(msg))
-		case Notice:
-			o.w.Notice(string(msg))
-		case Info:
-			o.w.Info(string(msg))
-		case Debug:
-			fallthrough
-		default:
-			o.w.Debug(string(msg))
-		}
-	}
 }
 
 // StdlibOutput is a TextOutput that simply writes to the default Go stdlib
