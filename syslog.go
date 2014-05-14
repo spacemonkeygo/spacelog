@@ -18,6 +18,7 @@ package spacelog
 
 import (
 	"log/syslog"
+	"bytes"
 )
 
 // SyslogOutput is a syslog client that matches the TextOutput interface
