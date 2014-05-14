@@ -1,4 +1,4 @@
-# spacelog
+# spacelog [![Build Status](https://api.travis-ci.org/spacemonkeygo/spacelog.svg?branch=master)](https://travis-ci.org/spacemonkeygo/spacelog)
 
 Please see http://godoc.org/github.com/spacemonkeygo/spacelog for info
 
