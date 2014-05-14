@@ -51,14 +51,14 @@ func SetFormatMethod(name string, fn interface{}) {
 
 // MustSetup calls spacelog.MustSetup with a flag-configured config struct
 // It's pretty useless to call this method without parsing flags first, via
-// flag.Parse() or flagfile.Load() or something.
+// flagfile.Load()
 func MustSetup(procname string) {
 	spacelog.MustSetup(procname, config)
 }
 
 // Setup calls spacelog.Setup with a flag-configured config struct
 // It's pretty useless to call this method without parsing flags first, via
-// flag.Parse() or flagfile.Load() or something.
+// flagfile.Load()
 func Setup(procname string) error {
 	return spacelog.Setup(procname, config)
 }
