@@ -12,30 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !windows
-
 package spacelog
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 )
-
-// CaptureOutputToFd redirects the current process' stdout and stderr file
-// descriptors to the given file descriptor, using the dup2 syscall.
-func CaptureOutputToFd(fd int) error {
-	err := syscall.Dup2(fd, syscall.Stdout)
-	if err != nil {
-		return err
-	}
-	err = syscall.Dup2(fd, syscall.Stderr)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
 // CaptureOutputToFile opens a filehandle using the given path, then calls
 // CaptureOutputToFd on the associated filehandle.
