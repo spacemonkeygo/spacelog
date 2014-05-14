@@ -80,6 +80,7 @@ type subprocInfo struct {
 //  * configuring the output (a file, syslog, stdout, stderr)
 //  * configuring log event buffering
 //  * capturing all standard library logging with configurable log level
+// It is expected that this method will be called once at process start.
 func Setup(procname string, config SetupConfig) error {
 	if config.Subproc != "" {
 		t, err := template.New("subproc").Parse(config.Subproc)
