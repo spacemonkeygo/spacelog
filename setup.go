@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !windows
-
 package spacelog
 
 import (
 	"bytes"
 	"fmt"
 	"log"
-	"log/syslog"
 	"math"
 	"os"
 	"regexp"
@@ -90,7 +87,7 @@ func Setup(procname string, config SetupConfig) error {
 		var buf bytes.Buffer
 		err = t.Execute(&buf, &subprocInfo{
 			Facility: fmt.Sprintf("%d", config.Facility),
-			Level:    fmt.Sprintf("%d", syslog.LOG_CRIT),
+			Level:    fmt.Sprintf("%d", 2), // syslog.LOG_CRIT
 			Name:     procname})
 		if err != nil {
 			return err
@@ -127,7 +124,7 @@ func Setup(procname string, config SetupConfig) error {
 	var textout TextOutput
 	switch strings.ToLower(config.Output) {
 	case "syslog":
-		w, err := NewSyslogOutput(syslog.Priority(config.Facility), procname)
+		w, err := NewSyslogOutput(SyslogPriority(config.Facility), procname)
 		if err != nil {
 			return err
 		}

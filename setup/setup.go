@@ -29,8 +29,6 @@ This package adds the following flags:
 package setup
 
 import (
-	"log/syslog"
-
 	"github.com/spacemonkeygo/flagfile"
 	"github.com/spacemonkeygo/spacelog"
 )
@@ -65,7 +63,7 @@ func Setup(procname string) error {
 
 // MustSetupWithFacility is deprecated and will be removed soon. Please
 // configure facility through the facility flag option.
-func MustSetupWithFacility(procname string, facility syslog.Priority) {
+func MustSetupWithFacility(procname string, facility spacelog.SyslogPriority) {
 	err := SetupWithFacility(procname, facility)
 	if err != nil {
 		panic(err)
@@ -74,7 +72,8 @@ func MustSetupWithFacility(procname string, facility syslog.Priority) {
 
 // SetupWithFacility is deprecated and will be removed soon. Please
 // configure facility through the facility flag option.
-func SetupWithFacility(procname string, facility syslog.Priority) error {
+func SetupWithFacility(procname string,
+	facility spacelog.SyslogPriority) error {
 	config_copy := config
 	config_copy.Facility = int(facility)
 	return spacelog.Setup(procname, config_copy)

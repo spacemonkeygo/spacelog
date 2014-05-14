@@ -18,7 +18,9 @@ import (
 	"fmt"
 )
 
-func NewSyslogOutput(facility syslog.Priority, tag string) (
+type SyslogPriority int
+
+func NewSyslogOutput(facility SyslogPriority, tag string) (
 	*SyslogOutput, error) {
 	return nil, fmt.Errorf("SyslogOutput not supported on Windows")
 }

@@ -17,9 +17,11 @@
 package spacelog
 
 import (
-	"log/syslog"
 	"bytes"
+	"log/syslog"
 )
+
+type SyslogPriority syslog.Priority
 
 // SyslogOutput is a syslog client that matches the TextOutput interface
 type SyslogOutput struct {
@@ -29,9 +31,9 @@ type SyslogOutput struct {
 // NewSyslogOutput returns a TextOutput object that writes to syslog using
 // the given facility and tag. The log level will be determined by the log
 // event.
-func NewSyslogOutput(facility syslog.Priority, tag string) (
+func NewSyslogOutput(facility SyslogPriority, tag string) (
 	*SyslogOutput, error) {
-	w, err := syslog.New(facility, tag)
+	w, err := syslog.New(syslog.Priority(facility), tag)
 	if err != nil {
 		return nil, err
 	}
