@@ -32,7 +32,7 @@ type SyslogOutput struct {
 // the given facility and tag. The log level will be determined by the log
 // event.
 func NewSyslogOutput(facility SyslogPriority, tag string) (
-	*SyslogOutput, error) {
+	TextOutput, error) {
 	w, err := syslog.New(syslog.Priority(facility), tag)
 	if err != nil {
 		return nil, err

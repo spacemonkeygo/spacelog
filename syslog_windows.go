@@ -21,6 +21,6 @@ import (
 type SyslogPriority int
 
 func NewSyslogOutput(facility SyslogPriority, tag string) (
-	*SyslogOutput, error) {
+	TextOutput, error) {
 	return nil, fmt.Errorf("SyslogOutput not supported on Windows")
 }
