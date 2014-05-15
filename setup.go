@@ -26,7 +26,7 @@ import (
 )
 
 // SetupConfig is a configuration struct meant to be used with
-//   github.com/spacemonkeygo/flagfile.Setup
+//   github.com/spacemonkeygo/flagfile/utils.Setup
 // but can be used independently.
 type SetupConfig struct {
 	Output   string `default:"stderr" usage:"log output. can be stdout, stderr, syslog, or a path"`
