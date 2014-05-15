@@ -29,7 +29,7 @@ This package adds the following flags:
 package setup
 
 import (
-	"github.com/spacemonkeygo/flagfile"
+	"github.com/spacemonkeygo/flagfile/utils"
 	"github.com/spacemonkeygo/spacelog"
 )
 
@@ -38,7 +38,7 @@ var (
 )
 
 func init() {
-	flagfile.Setup("log", &config)
+	utils.Setup("log", &config)
 }
 
 // SetFormatMethod in this subpackage is deprecated and will be removed soon.
