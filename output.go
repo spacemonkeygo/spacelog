@@ -16,8 +16,10 @@ package spacelog
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"log"
+	"os"
 	"sync"
 )
 
@@ -98,5 +100,79 @@ func (b *BufferedOutput) process() {
 			break
 		}
 		b.o.Output(msg.level, msg.message)
+	}
+}
+
+// A TextOutput object that also implements HupHandlingTextOutput may have its
+// OnHup() method called when an administrative signal is sent to this process.
+type HupHandlingTextOutput interface {
+	TextOutput
+	OnHup()
+}
+
+// FileWriterOutput is like WriterOutput with a plain file handle, but it
+// knows how to reopen the file (or try to reopen it) if it hasn't been able
+// to open the file previously, or if an appropriate signal has been received.
+type FileWriterOutput struct {
+	*WriterOutput
+	path string
+}
+
+// Creates a new FileWriterOutput object. This is the only case where an
+// error opening the file will be reported to the caller; if we try to
+// reopen it later and the reopen fails, we'll just keep trying until it
+// works.
+func NewFileWriterOutput(path string) (*FileWriterOutput, error) {
+	fo := &FileWriterOutput{path: path}
+	fh, err := fo.openFile()
+	if err != nil {
+		return nil, err
+	}
+	fo.WriterOutput = NewWriterOutput(fh)
+	return fo, nil
+}
+
+// Try to open the file with the path associated with this object.
+func (fo *FileWriterOutput) openFile() (*os.File, error) {
+	return os.OpenFile(fo.path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+}
+
+// Try to communicate a message without using our log file. In all likelihood,
+// stderr is closed or redirected to /dev/null, but at least we can try
+// writing there. In the very worst case, if an admin attaches a ptrace to
+// this process, it will be more clear what the problem is.
+func (fo *FileWriterOutput) fallbackLog(tmpl string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, tmpl, args...)
+}
+
+// Output a log line by writing it to the file. If the file has been
+// released, try to open it again. If that fails, cry for a little
+// while, then throw away the message and carry on.
+func (fo *FileWriterOutput) Output(ll LogLevel, message []byte) {
+	if fo.WriterOutput == nil {
+		fh, err := fo.openFile()
+		if err != nil {
+			fo.fallbackLog("Could not open %#v: %s", fo.path, err)
+			return
+		}
+		fo.WriterOutput = NewWriterOutput(fh)
+	}
+	fo.WriterOutput.Output(ll, message)
+}
+
+// Throw away any references/handles to the output file. This probably
+// means the admin wants to rotate the file out and have this process
+// open a new one. Close the underlying io.Writer if that is a thing
+// that it knows how to do.
+func (fo *FileWriterOutput) OnHup() {
+	if fo.WriterOutput != nil {
+		wc, ok := fo.WriterOutput.w.(io.Closer)
+		if ok {
+			err := wc.Close()
+			if err != nil {
+				fo.fallbackLog("Closing %#v failed: %s", fo.path, err)
+			}
+		}
+		fo.WriterOutput = nil
 	}
 }
