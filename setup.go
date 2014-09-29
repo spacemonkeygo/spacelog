@@ -20,8 +20,10 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/signal"
 	"regexp"
 	"strings"
+	"syscall"
 	"text/template"
 )
 
@@ -37,7 +39,8 @@ type SetupConfig struct {
 	Subproc  string `default:"" usage:"process to run for stdout/stderr-captured logging. The command is first processed as a Go template that supports {{.Facility}}, {{.Level}}, and {{.Name}} fields, and then passed to sh. If set, will redirect stdout and stderr to the given process. A good default is 'setsid logger --priority {{.Facility}}.{{.Level}} --tag {{.Name}}'"`
 	Buffer   int    `default:"0" usage:"the number of messages to buffer. 0 for no buffer"`
 	// Facility defaults to syslog.LOG_USER (which is 8)
-	Facility int `default:"8" usage:"the syslog facility to use if syslog output is configured"`
+	Facility  int  `default:"8" usage:"the syslog facility to use if syslog output is configured"`
+	HupRotate bool `default:"false" usage:"if true, sending a HUP signal will reopen log files"`
 }
 
 var (
@@ -146,12 +149,22 @@ func Setup(procname string, config SetupConfig) error {
 		if t == nil {
 			t = StandardTemplate
 		}
-		fh, err := os.OpenFile(config.Output,
-			os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		var err error
+		textout, err = NewFileWriterOutput(config.Output)
 		if err != nil {
 			return err
 		}
-		textout = NewWriterOutput(fh)
+	}
+	if config.HupRotate {
+		if hh, ok := textout.(HupHandlingTextOutput); ok {
+			sigchan := make(chan os.Signal)
+			signal.Notify(sigchan, syscall.SIGHUP)
+			go func() {
+				for _ = range sigchan {
+					hh.OnHup()
+				}
+			}()
+		}
 	}
 	if config.Buffer > 0 {
 		textout = NewBufferedOutput(textout, config.Buffer)
