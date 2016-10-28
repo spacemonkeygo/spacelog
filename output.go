@@ -115,6 +115,7 @@ type HupHandlingTextOutput interface {
 // to open the file previously, or if an appropriate signal has been received.
 type FileWriterOutput struct {
 	*WriterOutput
+	mu   sync.Mutex
 	path string
 }
 
@@ -145,34 +146,67 @@ func (fo *FileWriterOutput) fallbackLog(tmpl string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, tmpl, args...)
 }
 
-// Output a log line by writing it to the file. If the file has been
-// released, try to open it again. If that fails, cry for a little
-// while, then throw away the message and carry on.
+// Output a log line by writing it to the file.
 func (fo *FileWriterOutput) Output(ll LogLevel, message []byte) {
-	if fo.WriterOutput == nil {
-		fh, err := fo.openFile()
-		if err != nil {
-			fo.fallbackLog("Could not open %#v: %s", fo.path, err)
-			return
-		}
-		fo.WriterOutput = NewWriterOutput(fh)
+	wo := fo.loadWriterOutput()
+	if wo == nil {
+		return
 	}
-	fo.WriterOutput.Output(ll, message)
+	wo.Output(ll, message)
+}
+
+// loadWriterOutput tries to load the most recent version of fo.WriterOutput.
+// It uses atomics first, and falls back to a mutex if it's nil. If the file
+// has been  released, try to open it again. If that fails, cry for a little
+// while, then throw away the message and carry on.
+func (fo *FileWriterOutput) loadWriterOutput() (wo *WriterOutput) {
+	wo = loadWriterOutput(&fo.WriterOutput)
+	if wo != nil {
+		return wo
+	}
+
+	fo.mu.Lock()
+
+	wo = loadWriterOutput(&fo.WriterOutput)
+	if wo != nil {
+		fo.mu.Unlock()
+		return wo
+	}
+
+	fh, err := fo.openFile()
+	if err != nil {
+		fo.mu.Unlock()
+		fo.fallbackLog("Could not open %#v: %s", fo.path, err)
+		return nil
+	}
+
+	wo = NewWriterOutput(fh)
+	storeWriterOutput(&fo.WriterOutput, wo)
+	fo.mu.Unlock()
+
+	return wo
 }
 
 // Throw away any references/handles to the output file. This probably
 // means the admin wants to rotate the file out and have this process
 // open a new one. Close the underlying io.Writer if that is a thing
-// that it knows how to do.
+// that it knows how to do. Note that any concurrent Output calls with an
+// OnHup may end up attempting to write to some Closed output.
 func (fo *FileWriterOutput) OnHup() {
-	if fo.WriterOutput != nil {
-		wc, ok := fo.WriterOutput.w.(io.Closer)
-		if ok {
-			err := wc.Close()
-			if err != nil {
-				fo.fallbackLog("Closing %#v failed: %s", fo.path, err)
-			}
+	fo.mu.Lock()
+	wo := loadWriterOutput(&fo.WriterOutput)
+	if wo == nil {
+		fo.mu.Unlock()
+		return
+	}
+	storeWriterOutput(&fo.WriterOutput, nil)
+	fo.mu.Unlock()
+
+	wc, ok := wo.w.(io.Closer)
+	if ok {
+		err := wc.Close()
+		if err != nil {
+			fo.fallbackLog("Closing %#v failed: %s", fo.path, err)
 		}
-		fo.WriterOutput = nil
 	}
 }
