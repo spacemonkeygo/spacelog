@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Space Monkey, Inc.
+// Copyright (C) 2016 Space Monkey, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !appengine
-
 package spacelog
 
 import (
-	"syscall"
+	"strconv"
 )
 
-// CaptureOutputToFd redirects the current process' stdout and stderr file
-// descriptors to the given file descriptor, using the dup3 syscall.
-func CaptureOutputToFd(fd int) error {
-	err := syscall.Dup3(fd, syscall.Stdout, 0)
-	if err != nil {
-		return err
+const (
+	sigHUP = syscallSignal(0x1)
+)
+
+type syscallSignal int
+
+func (s syscallSignal) Signal() {}
+
+func (s syscallSignal) String() string {
+	switch s {
+	case sigHUP:
+		return "hangup"
 	}
-	err = syscall.Dup3(fd, syscall.Stderr, 0)
-	if err != nil {
-		return err
-	}
-	return nil
+	return "signal " + strconv.Itoa(int(s))
 }
