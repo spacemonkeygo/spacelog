@@ -25,11 +25,11 @@ import (
 // CaptureOutputToFd redirects the current process' stdout and stderr file
 // descriptors to the given file descriptor, using the dup2 syscall.
 func CaptureOutputToFd(fd int) error {
-	err := syscall.Dup2(fd, syscall.Stdout)
+	err := syscall.Dup3(fd, syscall.Stdout, 0)
 	if err != nil {
 		return err
 	}
-	err = syscall.Dup2(fd, syscall.Stderr)
+	err = syscall.Dup3(fd, syscall.Stderr, 0)
 	if err != nil {
 		return err
 	}
