@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Space Monkey, Inc.
+// Copyright (C) 2017 Space Monkey, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,24 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build !appengine
+
 package spacelog
 
-import (
-	"strconv"
-)
+import "syscall"
 
 const (
-	sigHUP = syscallSignal(0x1)
+	sigHUP = syscall.SIGHUP
 )
-
-type syscallSignal int
-
-func (s syscallSignal) Signal() {}
-
-func (s syscallSignal) String() string {
-	switch s {
-	case sigHUP:
-		return "hangup"
-	}
-	return "signal " + strconv.Itoa(int(s))
-}
