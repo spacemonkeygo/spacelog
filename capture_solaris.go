@@ -12,25 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !windows
-// +build !linux
-// +build !appengine
-// +build !solaris
-
 package spacelog
 
 import (
-	"syscall"
+	"golang.org/x/sys/unix"
 )
 
 // CaptureOutputToFd redirects the current process' stdout and stderr file
 // descriptors to the given file descriptor, using the dup2 syscall.
 func CaptureOutputToFd(fd int) error {
-	err := syscall.Dup2(fd, syscall.Stdout)
+	err := unix.Dup2(fd, unix.Stdout)
 	if err != nil {
 		return err
 	}
-	err = syscall.Dup2(fd, syscall.Stderr)
+	err = unix.Dup2(fd, unix.Stderr)
 	if err != nil {
 		return err
 	}
