@@ -38,8 +38,9 @@ type SetupConfig struct {
 	Subproc  string `default:"" usage:"process to run for stdout/stderr-captured logging. The command is first processed as a Go template that supports {{.Facility}}, {{.Level}}, and {{.Name}} fields, and then passed to sh. If set, will redirect stdout and stderr to the given process. A good default is 'setsid logger --priority {{.Facility}}.{{.Level}} --tag {{.Name}}'"`
 	Buffer   int    `default:"0" usage:"the number of messages to buffer. 0 for no buffer"`
 	// Facility defaults to syslog.LOG_USER (which is 8)
-	Facility  int  `default:"8" usage:"the syslog facility to use if syslog output is configured"`
-	HupRotate bool `default:"false" usage:"if true, sending a HUP signal will reopen log files"`
+	Facility  int    `default:"8" usage:"the syslog facility to use if syslog output is configured"`
+	HupRotate bool   `default:"false" usage:"if true, sending a HUP signal will reopen log files"`
+	Config    string `default:"" usage:"a semicolon separated list of logger=level; sets each log to the corresponding level"`
 }
 
 var (
@@ -95,6 +96,12 @@ func Setup(procname string, config SetupConfig) error {
 			return err
 		}
 		err = CaptureOutputToProcess("sh", "-c", string(buf.Bytes()))
+		if err != nil {
+			return err
+		}
+	}
+	if config.Config != "" {
+		err := ConfigureLoggers(config.Config)
 		if err != nil {
 			return err
 		}

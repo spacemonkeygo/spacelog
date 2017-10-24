@@ -69,7 +69,7 @@ func NewLoggerCollection() *LoggerCollection {
 // the callstack. If you want to avoid automatic name generation check out
 // GetLoggerNamed
 func (c *LoggerCollection) GetLogger() *Logger {
-	return GetLoggerNamed(callerName())
+	return c.GetLoggerNamed(callerName())
 }
 
 func (c *LoggerCollection) getLogger(name string, level LogLevel,
@@ -86,6 +86,35 @@ func (c *LoggerCollection) getLogger(name string, level LogLevel,
 		c.loggers[name] = logger
 	}
 	return logger
+}
+
+// ConfigureLoggers configures loggers according to the given string
+// specification, which specifies a set of loggers and their associated
+// logging levels.  Loggers are semicolon-separated; each
+// configuration is specified as <logger>=<level>.  White space outside of
+// logger names and levels is ignored.  The default level is specified
+// with the name "DEFAULT".
+//
+// An example specification:
+//	`DEFAULT=ERROR; foo.bar=WARNING`
+func (c *LoggerCollection) ConfigureLoggers(specification string) error {
+	confs := strings.Split(strings.TrimSpace(specification), ";")
+	for i := range confs {
+		conf := strings.SplitN(confs[i], "=", 2)
+		levelstr := strings.TrimSpace(conf[1])
+		name := strings.TrimSpace(conf[0])
+		level, err := LevelFromString(levelstr)
+		if err != nil {
+			return err
+		}
+		if name == "DEFAULT" {
+			c.level = level
+			continue
+		}
+		logger := c.GetLoggerNamed(name)
+		logger.level = level
+	}
+	return nil
 }
 
 // GetLoggerNamed returns a new Logger with the provided name. GetLogger is
@@ -194,6 +223,19 @@ func GetLogger() *Logger {
 // logger collection. GetLogger is more frequently used.
 func GetLoggerNamed(name string) *Logger {
 	return DefaultLoggerCollection.GetLoggerNamed(name)
+}
+
+// ConfigureLoggers configures loggers according to the given string
+// specification, which specifies a set of loggers and their associated
+// logging levels.  Loggers are colon- or semicolon-separated; each
+// configuration is specified as <logger>=<level>.  White space outside of
+// logger names and levels is ignored.  The DEFAULT module is specified
+// with the name "DEFAULT".
+//
+// An example specification:
+//	`DEFAULT=ERROR; foo.bar=WARNING`
+func ConfigureLoggers(specification string) error {
+	return DefaultLoggerCollection.ConfigureLoggers(specification)
 }
 
 // SetLevel will set the current log level for all loggers on the default
