@@ -108,11 +108,11 @@ func (c *LoggerCollection) ConfigureLoggers(specification string) error {
 			return err
 		}
 		if name == "DEFAULT" {
-			c.level = level
+			c.SetLevel(nil, level)
 			continue
 		}
 		logger := c.GetLoggerNamed(name)
-		logger.level = level
+		logger.setLevel(level)
 	}
 	return nil
 }
